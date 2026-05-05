@@ -18,7 +18,8 @@ select b.brand ,f.listing_price::int ,count(f.*)
 from brands as b
 inner join finance as f
 on b.product_id=f.product_id
-where b.brand ='Adidas' or b.brand ='Nike' and f.listing_price>0
+WHERE (b.brand = 'Adidas' OR b.brand = 'Nike') 
+  AND f.listing_price > 0
 group by b.brand,f.listing_price
 order by f.listing_price desc
 
@@ -70,7 +71,7 @@ on r.product_id= f.product_id
 -- Convert rating to a numeric data type and calculate average_rating
 -- Join info to reviews on product_id and group the results by description_length
 -- Filter for products without missing values for description, and sort results by description_length
-select (length(i.description)-length(i.description )%100)as description_length, round(avg(r.rating::numeric),2)as average_rating
+select (length(i.description)-length(i.description ) %100 ) as description_length, round(avg(r.rating::numeric),2)as average_rating
 from info as i
 left join reviews as r
 on i.product_id= r.product_id
@@ -125,13 +126,15 @@ with footwear as(
     inner join finance as f
     on i.product_id=f.product_id
     where i.description ilike '%shoe%' or i.description ilike '%trainer%' or i.description ilike '%foot%'
+)و
+    clothing as (
+    select i.product_id, f.revenue
+    from info i
+    inner join finance f on i.product_id = f.product_id
+    where i.product_id not in (select product_id from footwear)  -- أو LEFT JOIN + IS NULL
 )
-select count(i.*) as num_clothing_products, percentile_disc(.5) within group(order by(f.revenue))as median_clothing_revenue
-from info as i
-inner join finance as f 
-on i.product_id=f.product_id
-where i.description not in (select description from footwear)
-
-
+select count(*) as num_clothing_products, 
+       PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY revenue) as median_clothing_revenue
+from clothing;
 ---------------------------
 
